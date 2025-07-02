@@ -5,6 +5,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { logout } from '../../Redux/Slice/AuthSlice/AuthSlice';
 import { fetchAllDisputes } from '../../Redux/Slice/DisputeSlice/DisputeSlice';
+
+
+
 const MediatorDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -45,6 +48,24 @@ const MediatorDashboard = () => {
     navigate('/');
   };
 
+  // Helper function to truncate email
+  const truncateEmail = (email) => {
+    if (!email) return '';
+    const atIndex = email.indexOf('@');
+    if (atIndex === -1) return email; // Not a valid email format
+
+    const username = email.substring(0, atIndex);
+    const domain = email.substring(atIndex + 1);
+
+    // Show first 3 characters of username, then "...", then the domain
+    if (username.length > 3) {
+      return `${username.substring(0, 3)}...${domain}`;
+    }
+    return email; // If username is 3 or less characters, show full email
+  };
+
+  const displayEmail = truncateEmail(user?.mediator_email || fallbackEmail);
+
   return (
     <div className="container-fluid py-4" style={{ backgroundColor: 'rgb(249, 249, 251)', minHeight: '100vh' }}>
       <div className="container">
@@ -55,7 +76,7 @@ const MediatorDashboard = () => {
             Logout
           </button>
           <span className="fw-medium text-muted">
-            Logged in as: <strong>{user?.mediator_email || fallbackEmail}</strong>
+            Logged in as: <strong>{displayEmail}</strong>
           </span>
         </div>
 

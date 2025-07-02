@@ -3,7 +3,7 @@ import DisputeCard from '../../components/DisputeCard';
 import { CheckCircle, AlertTriangle, RefreshCcw } from 'react-feather';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { logout } from '../../Redux/Slice/AuthSlice/authSlice';
+import { logout } from '../../Redux/Slice/AuthSlice/AuthSlice';
 import { fetchAllDisputes } from '../../Redux/Slice/DisputeSlice/DisputeSlice';
 const MediatorDashboard = () => {
   const dispatch = useDispatch();

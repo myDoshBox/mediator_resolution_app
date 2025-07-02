@@ -1,10 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './Slice/AuthSlice/AuthSlice';
+import authReducer from './Slice/AuthSlice/authSlice';
+import disputeReducer from './Slice/DisputeSlice/DisputeSlice';
 
-const store = configureStore({
+export const store = configureStore({
   reducer: {
     auth: authReducer,
+    disputes: disputeReducer,
   },
 });
-
-export { store };

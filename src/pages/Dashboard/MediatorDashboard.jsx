@@ -2,9 +2,10 @@ import React, { useEffect, useState, useMemo } from 'react';
 import DisputeCard from '../../components/DisputeCard';
 import { CheckCircle, AlertTriangle, RefreshCcw } from 'react-feather';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate } from 'react-router-dom';
 import { logout } from '../../Redux/Slice/AuthSlice/AuthSlice';
 import { fetchAllDisputes } from '../../Redux/Slice/DisputeSlice/DisputeSlice';
+
 
 
 
@@ -12,43 +13,31 @@ const MediatorDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { disputes, loading, error } = useSelector((state) => state.disputes);
+  // Get user from Redux or fallback from localStorage
   const user = useSelector((state) => state.auth.user);
-  const fallbackEmail = JSON.parse(localStorage.getItem('user'))?.mediator_email;
+  const mediatorEmail = user?.mediator_email || JSON.parse(localStorage.getItem('user'))?.mediator_email;
+
+  // Dispute states
+  const { disputes, loading, error } = useSelector((state) => state.disputes);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
+  // Fetch mediator disputes
   useEffect(() => {
-    dispatch(fetchAllDisputes());
-  }, [dispatch]);
-
-  const resolved = disputes.filter(d => d.status === 'resolved').length;
-  const unresolved = disputes.filter(d => d.status === 'unresolved').length;
-  const inResolution = disputes.filter(d => d.status === 'resolving').length;
-
-  const filteredDisputes = useMemo(() => {
-    return disputes
-      .filter((d) =>
-        d.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.status.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).reverse();
-  }, [disputes, searchTerm]);
-
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredDisputes.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredDisputes.length / itemsPerPage);
+    if (mediatorEmail) {
+      dispatch(fetchAllDisputes(mediatorEmail));
+    }
+  }, [dispatch, mediatorEmail]);
 
   const handleLogout = () => {
     dispatch(logout());
     localStorage.clear();
-    navigate('/');
+    navigate(`/dashboard/dispute/${dispute._id}`);
   };
-
-  // Helper function to truncate email
+   
+      // Helper function to truncate email
   const truncateEmail = (email) => {
     if (!email) return '';
     const atIndex = email.indexOf('@');
@@ -66,10 +55,29 @@ const MediatorDashboard = () => {
 
   const displayEmail = truncateEmail(user?.mediator_email || fallbackEmail);
 
+
+
+  const resolved = disputes.filter(d => d.dispute_status === 'resolved').length;
+  const unresolved = disputes.filter(d => d.dispute_status === 'unresolved').length;
+  const inResolution = disputes.filter(d => d.dispute_status === 'resolving').length;
+
+  const filteredDisputes = useMemo(() => {
+    return disputes
+      .filter(d =>
+        d.product_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.dispute_status?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [disputes, searchTerm]);
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredDisputes.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredDisputes.length / itemsPerPage);
+
   return (
     <div className="container-fluid py-4" style={{ backgroundColor: 'rgb(249, 249, 251)', minHeight: '100vh' }}>
       <div className="container">
-
         {/* Top Bar */}
         <div className="d-flex justify-content-between align-items-center mb-4">
           <button className="btn btn-outline-danger btn-sm" onClick={handleLogout}>
@@ -93,7 +101,7 @@ const MediatorDashboard = () => {
           </div>
         </div>
 
-        {/* Dispute Table Header */}
+        {/* Table Controls */}
         <h5 className="fw-bold mb-3">All Disputes</h5>
         <div className="d-flex justify-content-between align-items-center mb-2">
           <div>
@@ -133,26 +141,31 @@ const MediatorDashboard = () => {
           <table className="table table-bordered">
             <thead>
               <tr>
-                <th>Dispute Title</th>
-                <th>Status</th>
-                <th>Created At</th>
+                <th>Product Name</th>
+                <th>Dispute Status</th>
+                <th>Dispute Date</th>
+                <th>Dispute Time</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr>
-                  <td colSpan="3" className="text-center text-muted">Loading disputes...</td>
-                </tr>
+                <tr><td colSpan="5" className="text-center text-muted">Loading...</td></tr>
               ) : currentItems.length === 0 ? (
-                <tr>
-                  <td colSpan="3" className="text-center text-muted">No disputes found</td>
-                </tr>
+                <tr><td colSpan="5" className="text-center text-muted">No disputes found</td></tr>
               ) : (
-                currentItems.map(dispute => (
-                  <tr key={dispute.id}>
-                    <td>{dispute.title}</td>
-                    <td>{dispute.status}</td>
-                    <td>{new Date(dispute.createdAt).toLocaleString()}</td>
+                currentItems.map((dispute) => (
+                  <tr key={dispute._id}>
+                    <td>{dispute.product_name}</td>
+                    <td>{dispute.dispute_status}</td>
+                    <td>{new Date(dispute.createdAt).toLocaleDateString()}</td>
+                    <td>{new Date(dispute.createdAt).toLocaleTimeString()}</td>
+                    <td>
+                        {/* // Inside your map for disputes */}
+                          <Link to={`/dashboard/dispute/${dispute._id}`} className="btn btn-sm btn-success">
+                            View More
+                          </Link>
+                    </td>
                   </tr>
                 ))
               )}
@@ -164,24 +177,24 @@ const MediatorDashboard = () => {
             <span>
               Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredDisputes.length)} of {filteredDisputes.length} entries
             </span>
+
             <nav>
               <ul className="pagination mb-0">
                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                  <button className="page-link" onClick={() => setCurrentPage(p => p - 1)}>Previous</button>
+                  <button className="page-link" onClick={() => setCurrentPage(prev => prev - 1)}>Previous</button>
                 </li>
                 {Array.from({ length: totalPages }, (_, i) => (
                   <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                    <button className="page-link" onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
+                    <button className="page-link bg-success" onClick={() => setCurrentPage(i + 1)}>{i + 1}</button>
                   </li>
                 ))}
                 <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                  <button className="page-link" onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+                  <button className="page-link text-success" onClick={() => setCurrentPage(prev => prev + 1)}>Next</button>
                 </li>
               </ul>
             </nav>
           </div>
         </div>
-
       </div>
     </div>
   );

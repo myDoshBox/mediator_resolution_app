@@ -1,43 +1,123 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { Modal, Button, Card } from 'react-bootstrap';
 
 const DisputeDetails = () => {
   const { id } = useParams();
-  const [dispute, setDispute] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const dispute = useSelector((state) =>
+    state.disputes.disputes.find((d) => d._id === id)
+  );
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
+  const [show, setShow] = useState(false);
 
-    fetch(`http://localhost:5000/api/disputes/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setDispute(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, [id]);
-
-  if (loading) return <div className="p-4">Loading...</div>;
-  if (!dispute) return <div className="p-4 text-danger">Dispute not found</div>;
+  if (!dispute) {
+    return (
+      <div className="text-center py-5">
+        <h4>Dispute not found</h4>
+        <p>
+          Return to <Link to="/dashboard">Dashboard</Link>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-4">
-      <h3>Dispute Details</h3>
-      <div className="bg-white p-3 shadow-sm rounded">
-        <p><strong>Title:</strong> {dispute.title}</p>
-        <p><strong>Status:</strong> {dispute.status}</p>
-        <p><strong>Description:</strong> {dispute.description || 'N/A'}</p>
-        <p><strong>Created At:</strong> {new Date(dispute.createdAt).toLocaleString()}</p>
-        {/* Add more fields if needed */}
+      <h3 className="mb-4 text-center">Dispute Details</h3>
+
+      {/* User Details */}
+      <Card className="mb-4 shadow-sm table-hover">
+        <Card.Header className="bg-primary text-white">User Details</Card.Header>
+        <Card.Body>
+          <table className="table mb-0">
+            <tbody>
+              <tr><td>Email</td><td>{dispute.user.email}</td></tr>
+              <tr><td>Phone</td><td>{dispute.user.phone_number}</td></tr>
+              <tr><td>Initiated Date</td><td>{new Date(dispute.createdAt).toLocaleDateString()}</td></tr>
+              <tr><td>Initiated Time</td><td>{new Date(dispute.createdAt).toLocaleTimeString()}</td></tr>
+            </tbody>
+          </table>
+        </Card.Body>
+      </Card>
+
+      {/* Transaction Details */}
+      <Card className="mb-4 shadow-sm table-hover">
+        <Card.Header className="bg-success text-white">Transaction Details</Card.Header>
+        <Card.Body>
+          <table className="table mb-0">
+            <tbody>
+              <tr><td>Vendor Name</td><td>{dispute.transaction.vendor_name}</td></tr>
+              <tr><td>Vendor Phone</td><td>{dispute.transaction.vendor_phone_number}</td></tr>
+              <tr><td>Vendor Email</td><td>{dispute.vendor_email}</td></tr>
+              <tr><td>Product Name</td><td>{dispute.product_name}</td></tr>
+              <tr><td>Product Quantity</td><td>{dispute.transaction.product_quantity}</td></tr>
+              <tr><td>Product Price</td><td>₦{dispute.transaction.product_price.toLocaleString()}</td></tr>
+              <tr>
+              <td>Product Image</td>
+              <td>
+                <img
+                  src={dispute.transaction.product_image}
+                  alt="Product"
+                  style={{ maxWidth: '120px', maxHeight: '120px', borderRadius: '8px' }}
+                />
+                </td>
+            </tr>
+              <tr><td>Delivery Address</td><td>{dispute.transaction.delivery_address}</td></tr>
+              <tr><td>Transaction Date</td><td>{new Date(dispute.transaction.createdAt).toLocaleDateString()}</td></tr>
+              <tr><td>Transaction Time</td><td>{new Date(dispute.transaction.createdAt).toLocaleTimeString()}</td></tr>
+            </tbody>
+          </table>
+        </Card.Body>
+      </Card>
+
+      {/* Dispute Info */}
+      <Card className="mb-4 shadow-sm table-hover">
+        <Card.Header className="bg-danger text-white">Dispute Information</Card.Header>
+        <Card.Body>
+          <table className="table mb-0">
+            <tbody>
+              <tr><td>Reason</td><td>{dispute.reason_for_dispute}</td></tr>
+              <tr><td>Description</td><td>{dispute.dispute_description}</td></tr>
+              <tr><td>Date</td><td>{new Date(dispute.createdAt).toLocaleDateString()}</td></tr>
+              <tr><td>Time</td><td>{new Date(dispute.createdAt).toLocaleTimeString()}</td></tr>
+            </tbody>
+          </table>
+        </Card.Body>
+      </Card>
+
+      {/* Footer Buttons */}
+      <div className="d-flex justify-content-between align-items-center mt-4">
+        <Button variant="outline-success" onClick={() => navigate(-1)}>
+          ← Back
+        </Button>
+        <Button variant="success" onClick={() => setShow(true)}>
+          Resolve Dispute
+        </Button>
       </div>
+
+      {/* Resolve Modal */}
+      <Modal show={show} onHide={() => setShow(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Resolve Dispute</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <textarea
+            className="form-control"
+            rows="5"
+            placeholder="Enter resolution notes here..."
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShow(false)}>
+            Cancel
+          </Button>
+          <Button variant="success">
+            Submit
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

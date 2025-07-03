@@ -1,16 +1,25 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
+// export const fetchMediatorDisputes = createAsyncThunk(
+//   'disputes/fetchMediatorDisputes',
+//   async (_, thunkAPI) => {
+//     try {
+//       const response = await fetch('https://mydoshbox-be.onrender.com/mediators/fetch-all-mediator-dispute/muoghaluchidinma@gmail.com');
+//       const data = await response.json();
+//       return data.data.disputes;
+//     } catch (error) {
+//       return thunkAPI.rejectWithValue(error.message);
+//     }
+//   } 
+// );
+
+
+// ✅ Async thunk to fetch disputes
 export const fetchAllDisputes = createAsyncThunk(
   'disputes/fetchAllDisputes',
-  async (_, thunkAPI) => {
+  async (mediator_email, thunkAPI) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/disputes', {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(`https://mydoshbox-be.onrender.com/mediators/fetch-all-mediator-dispute/${mediator_email}`);
 
       const data = await response.json();
 
@@ -18,7 +27,7 @@ export const fetchAllDisputes = createAsyncThunk(
         return thunkAPI.rejectWithValue(data.message || 'Failed to fetch disputes');
       }
 
-      return data.disputes; // adjust based on your API response structure
+      return data.data.disputes; // Make sure this matches your API structure
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }

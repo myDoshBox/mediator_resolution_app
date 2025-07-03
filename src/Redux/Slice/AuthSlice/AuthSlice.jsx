@@ -2,38 +2,41 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 const BASE_URL = 'https://mydoshbox-be.onrender.com/mediators';
 
-// Login async thunk using native fetch
+// Login mediator
 export const loginUser = createAsyncThunk(
-    'auth/loginUser',
-    async ({ mediator_email, password }, thunkAPI) => {
-      try {
-        const response = await fetch(`${BASE_URL}/mediator-login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ mediator_email, password }), // 👈 Make sure this matches
-        });
-  
-        const data = await response.json();
-  
-        if (!response.ok) {
-          throw new Error(data.message || 'Login failed');
-        }
-  
-        return data;
-      } catch (error) {
-        return thunkAPI.rejectWithValue(error.message);
+  'auth/loginUser',
+  async ({ mediator_email, password }, thunkAPI) => {
+    try {
+      const response = await fetch(`${BASE_URL}/mediator-login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ mediator_email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
       }
+
+      // Save to localStorage
+      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem('token', data.token);
+
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.message);
     }
-  );
-  
+  }
+);
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: null,
-    token: null,
+    user: JSON.parse(localStorage.getItem('user')) || null,
+    token: localStorage.getItem('token') || null,
     loading: false,
     error: null,
   },
@@ -41,6 +44,7 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
+      localStorage.removeItem('user');
       localStorage.removeItem('token');
     },
   },
@@ -55,7 +59,9 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.token = action.payload.token;
         localStorage.setItem('token', action.payload.token);
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // ✅ important
       })
+      
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;

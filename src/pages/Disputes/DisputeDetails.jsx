@@ -58,11 +58,12 @@ const DisputeDetails = () => {
               <td>Product Image</td>
               <td>
                 <img
-                  src={dispute.transaction.product_image}
+                  src={`https://your-api-domain.com/${dispute.transaction.product_image}`} // change as needed
                   alt="Product"
-                  style={{ maxWidth: '120px', maxHeight: '120px', borderRadius: '8px' }}
+                  style={{ maxWidth: '120px', maxHeight: '120px', borderRadius: '8px', objectFit: 'cover' }}
+                  onError={(e) => { e.target.src = '/fallback.jpg'; }} // fallback image
                 />
-                </td>
+              </td>
             </tr>
               <tr><td>Delivery Address</td><td>{dispute.transaction.delivery_address}</td></tr>
               <tr><td>Transaction Date</td><td>{new Date(dispute.transaction.createdAt).toLocaleDateString()}</td></tr>

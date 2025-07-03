@@ -78,8 +78,8 @@ const DisputeDetails = () => {
         <Card.Body>
           <table className="table mb-0">
             <tbody>
-              <tr><td>Reason</td><td>{dispute.reason_for_dispute}</td></tr>
-              <tr><td>Description</td><td>{dispute.dispute_description}</td></tr>
+              <tr><td>Reasons For Reason</td><td>{dispute.reason_for_dispute}</td></tr>
+              <tr><td>Dispute Description</td><td>{dispute.dispute_description}</td></tr>
               <tr><td>Date</td><td>{new Date(dispute.createdAt).toLocaleDateString()}</td></tr>
               <tr><td>Time</td><td>{new Date(dispute.createdAt).toLocaleTimeString()}</td></tr>
             </tbody>

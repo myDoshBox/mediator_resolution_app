@@ -55,16 +55,15 @@ const DisputeDetails = () => {
               <tr><td>Product Quantity</td><td>{dispute.transaction.product_quantity}</td></tr>
               <tr><td>Product Price</td><td>₦{dispute.transaction.product_price.toLocaleString()}</td></tr>
               <tr>
-              <td>Product Image</td>
-              <td>
-                <img
-                  src={`https://your-api-domain.com/${dispute.transaction.product_image}`} // change as needed
-                  alt="Product"
-                  style={{ maxWidth: '120px', maxHeight: '120px', borderRadius: '8px', objectFit: 'cover' }}
-                  onError={(e) => { e.target.src = '/fallback.jpg'; }} // fallback image
-                />
-              </td>
-            </tr>
+                <td>Product Image</td>
+                <td>
+                  <img
+                    src={dispute.transaction.product_image}
+                    alt="Product"
+                    style={{ maxWidth: '120px', maxHeight: '120px', borderRadius: '8px' }}
+                  />
+                </td>
+              </tr>
               <tr><td>Delivery Address</td><td>{dispute.transaction.delivery_address}</td></tr>
               <tr><td>Transaction Date</td><td>{new Date(dispute.transaction.createdAt).toLocaleDateString()}</td></tr>
               <tr><td>Transaction Time</td><td>{new Date(dispute.transaction.createdAt).toLocaleTimeString()}</td></tr>

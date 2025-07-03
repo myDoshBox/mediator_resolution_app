@@ -8,11 +8,15 @@ const DisputeCard = ({ title, count, icon: Icon, iconColor }) => {
         backgroundColor: '#fff',
         minWidth: '220px',
         borderRadius: '16px',
+        // Option 1: Set a fixed height
+        // height: '100px', // You can change this value as needed
+        // Option 2: Increase the minimum height
+        minHeight: '105px', // You can change this value as needed
       }}
     >
-      <div className="d-flex align-items-center">
+      <div className="d-flex align-items-center mt-2 ">
         <div
-          className="me-3 d-flex justify-content-center align-items-center"
+          className="me-3 d-flex justify-content-center align-items-center "
           style={{
             backgroundColor: iconColor,
             borderRadius: '50%',

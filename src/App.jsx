@@ -9,8 +9,9 @@ import {
 
 import LoginPage from './pages/Authentication/LoginPage';
 import Dashboard from './pages/Dashboard/MediatorDashboard';
-import DisputeDetails from './pages/Disputes/DisputeDetails';
+import DisputeDetails from './pages/Disputes/DisputeDetailsTables';
 import ProtectedRoute from './components/ProtectedRoute';
+import SettleDispute from "./pages/Disputes/SettleDispute"
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -42,6 +43,10 @@ const router = createBrowserRouter(
         {
           path: 'dispute/:id',
           element: <DisputeDetails />,
+        },
+        {
+          path: 'settle-dispute/:id/settle',
+          element: <SettleDispute />,
         },
       ],
     },

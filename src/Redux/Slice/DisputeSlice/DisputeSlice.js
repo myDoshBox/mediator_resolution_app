@@ -19,7 +19,7 @@ export const fetchAllDisputes = createAsyncThunk(
   'disputes/fetchAllDisputes',
   async (mediator_email, thunkAPI) => {
     try {
-      const response = await fetch(`https://mydoshbox-be.onrender.com/mediators/fetch-all-mediator-dispute/${mediator_email}`);
+      const response = await fetch(`https://mydoshbox-be.vercel.app/mediators/fetch-all-mediator-dispute/${mediator_email}`);
 
       const data = await response.json();
 

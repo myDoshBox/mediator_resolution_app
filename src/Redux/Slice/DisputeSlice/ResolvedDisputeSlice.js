@@ -1,7 +1,7 @@
 // src/Redux/Slice/ResolveDisputeSlice.js
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
-const API_URL = 'https://mydoshbox-be.onrender.com';
+const API_URL = ' https://mydoshbox-be.vercel.app/';
 
 export const resolveDispute = createAsyncThunk(
   'resolvedDisputes/resolveDispute',

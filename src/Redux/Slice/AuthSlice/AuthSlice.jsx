@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const BASE_URL = 'https://mydoshbox-be.onrender.com/mediators';
+const BASE_URL = ' https://mydoshbox-be.vercel.app/mediators';
 
 // Login mediator
 export const loginUser = createAsyncThunk(

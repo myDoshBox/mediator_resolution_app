@@ -1,118 +1,220 @@
-// src/pages/Disputes/SettleDispute.jsx
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux';
-import { Modal, Button, Form } from 'react-bootstrap';
-import { toast } from 'react-toastify';
-import { resolveDispute } from '../../Redux/Slice/DisputeSlice/ResolvedDisputeSlice';
+import React, { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { Modal, Button, Form, Alert } from "react-bootstrap";
+import { toast } from "react-toastify";
+import { resolveDispute } from "../../Redux/Slice/DisputeSlice/DisputeSlice";
+
+const RESOLVABLE = ["resolving", "escalated_to_mediator"];
 
 const SettleDispute = () => {
-  const { id } = useParams(); // id = transaction_id or dispute._id
+  const { id } = useParams(); // dispute._id (from route)
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // ── From Redux only ───────────────────────────────────────────────────────
   const dispute = useSelector((state) =>
-    state.disputes.disputes.find((d) => d._id === id)
+    state.disputes.disputes.find((d) => d._id === id),
   );
 
-  const [disputeFault, setDisputeFault] = useState('buyer');
-  const [resolutionDesc, setResolutionDesc] = useState('');
+  const [disputeFault, setDisputeFault] = useState("buyer");
+  const [resolutionDesc, setResolutionDesc] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   if (!dispute) {
     return (
       <div className="text-center py-5">
         <h4>Dispute not found</h4>
-        <p>
-          Return to{' '}
-          <Button variant="link" onClick={() => navigate(-1)}>
-            Dashboard
-          </Button>
-        </p>
+        <Button variant="link" onClick={() => navigate(-1)}>
+          ← Back to Dashboard
+        </Button>
+      </div>
+    );
+  }
+
+  if (!RESOLVABLE.includes(dispute.dispute_status)) {
+    return (
+      <div className="container py-5 text-center">
+        <Alert
+          variant={
+            dispute.dispute_status === "resolved" ? "success" : "warning"
+          }
+        >
+          <Alert.Heading>
+            {dispute.dispute_status === "resolved"
+              ? "✅ This dispute has already been resolved."
+              : `⚠️ Cannot resolve a dispute with status: ${dispute.dispute_status}`}
+          </Alert.Heading>
+        </Alert>
+        <Button variant="outline-secondary" onClick={() => navigate(-1)}>
+          ← Back
+        </Button>
       </div>
     );
   }
 
   const handleSubmit = async () => {
-     setSubmitting(true);
-    
-    const payload = {
-       transaction_id: dispute.transaction_id || dispute._id,
-       dispute_fault: disputeFault,
-       resolution_description: resolutionDesc,
-      };
-    
-     try {
-         const resultAction = await dispatch(resolveDispute(payload));
+    if (!resolutionDesc.trim()) return;
+    setSubmitting(true);
+    setSubmitError(null);
 
-       if (resolveDispute.fulfilled.match(resultAction)) {
-           toast.success('Dispute resolved successfully!');
-           navigate('/dashboard');
-       } else {
-          toast.error(resultAction.payload || 'Failed to resolve dispute.');
-       }
-      } catch (err) {
-        toast.error('An unexpected error occurred.');
-      } finally {
-        setSubmitting(false);
-        setShowModal(false);
-      }
+    // ✅ Must use transaction_id — backend route is /resolve-dispute/:transaction_id
+    const payload = {
+      transaction_id: dispute.transaction_id,
+      dispute_fault: disputeFault,
+      resolution_description: resolutionDesc.trim(),
     };
-    
-    
+
+    try {
+      const resultAction = await dispatch(resolveDispute(payload));
+
+      if (resolveDispute.fulfilled.match(resultAction)) {
+        toast.success("Dispute resolved successfully!");
+        setShowModal(false);
+        navigate("/dashboard");
+      } else {
+        const msg = resultAction.payload || "Failed to resolve dispute.";
+        setSubmitError(msg);
+        toast.error(msg);
+      }
+    } catch {
+      const msg = "An unexpected error occurred.";
+      setSubmitError(msg);
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
-    <div className="container py-5">
-      <h3 className="mb-4 text-center">Settle Dispute</h3>
+    <div className="container py-5" style={{ maxWidth: 640 }}>
+      <h3 className="mb-1 text-center fw-bold">Settle Dispute</h3>
+      <p className="text-center text-muted mb-4 small">
+        Transaction: <code>{dispute.transaction_id}</code>
+      </p>
+
+      {/* Context */}
+      <div className="bg-light rounded p-3 mb-4 small">
+        <div>
+          <strong>Product:</strong> {dispute.product_name}
+        </div>
+        <div>
+          <strong>Buyer:</strong> {dispute.buyer_email}
+        </div>
+        <div>
+          <strong>Seller:</strong> {dispute.vendor_email}
+        </div>
+        <div>
+          <strong>Reason:</strong> {dispute.reason_for_dispute}
+        </div>
+        <div>
+          <strong>Description:</strong> {dispute.dispute_description}
+        </div>
+      </div>
+
+      {submitError && (
+        <Alert
+          variant="danger"
+          onClose={() => setSubmitError(null)}
+          dismissible
+        >
+          {submitError}
+        </Alert>
+      )}
 
       <Form>
-        <Form.Group className="mb-3">
-          <Form.Label><strong>Who is at fault?</strong></Form.Label>
-          <Form.Select value={disputeFault} onChange={(e) => setDisputeFault(e.target.value)}>
-            <option value="buyer">Buyer</option>
-            <option value="seller">Seller</option>
+        <Form.Group className="mb-4">
+          <Form.Label className="fw-semibold">Who is at fault?</Form.Label>
+          <Form.Select
+            value={disputeFault}
+            onChange={(e) => setDisputeFault(e.target.value)}
+          >
+            <option value="buyer">Buyer — {dispute.buyer_email}</option>
+            <option value="seller">Seller — {dispute.vendor_email}</option>
           </Form.Select>
+          <Form.Text className="text-muted">
+            Both parties will be notified by email.
+          </Form.Text>
         </Form.Group>
 
-        <Form.Group className="mb-3">
-          <Form.Label><strong>Resolution Description</strong></Form.Label>
+        <Form.Group className="mb-4">
+          <Form.Label className="fw-semibold">
+            Resolution Description
+          </Form.Label>
           <Form.Control
             as="textarea"
-            rows={5}
-            placeholder="Enter resolution notes or description..."
+            rows={6}
+            placeholder="Explain your decision in detail…"
             value={resolutionDesc}
             onChange={(e) => setResolutionDesc(e.target.value)}
           />
+          <Form.Text className="text-muted">
+            {resolutionDesc.trim().length} characters
+          </Form.Text>
         </Form.Group>
 
         <div className="d-flex justify-content-between mt-4">
-          <Button variant="secondary" onClick={() => navigate(-1)}>← Back</Button>
+          <Button variant="outline-secondary" onClick={() => navigate(-1)}>
+            ← Back
+          </Button>
           <Button
             variant="success"
             disabled={!resolutionDesc.trim()}
             onClick={() => setShowModal(true)}
           >
-            Proceed
+            Review & Submit
           </Button>
         </div>
       </Form>
 
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Confirm Dispute Resolution</Modal.Title>
+          <Modal.Title>Confirm Resolution</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p><strong>Dispute Fault:</strong> {disputeFault}</p>
-          <p><strong>Resolution Description:</strong></p>
-          <div className="border p-2 rounded bg-light">{resolutionDesc}</div>
+          <p>
+            <strong>Fault Assigned To: </strong>
+            <span className="badge bg-danger text-capitalize">
+              {disputeFault}
+            </span>
+          </p>
+          <p className="mb-1">
+            <strong>Resolution Notes:</strong>
+          </p>
+          <div
+            className="border rounded p-2 bg-light"
+            style={{ whiteSpace: "pre-wrap" }}
+          >
+            {resolutionDesc}
+          </div>
+          <p className="mt-3 text-muted small mb-0">
+            ⚠️ This action is <strong>irreversible</strong>. Both parties will
+            be notified.
+          </p>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)} disabled={submitting}>
+          <Button
+            variant="outline-secondary"
+            onClick={() => setShowModal(false)}
+            disabled={submitting}
+          >
             Cancel
           </Button>
-          <Button variant="success" onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Submitting...' : 'Submit'}
+          <Button
+            variant="success"
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" />
+                Submitting…
+              </>
+            ) : (
+              "Confirm Resolution"
+            )}
           </Button>
         </Modal.Footer>
       </Modal>

@@ -1,42 +1,42 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import backendURL from "../../../config";
 
-const BASE_URL = ' https://mydoshbox-be.vercel.app/mediators';
-
-// Login mediator
+// ─── Login ────────────────────────────────────────────────────────────────────
 export const loginUser = createAsyncThunk(
-  'auth/loginUser',
+  "auth/loginUser",
   async ({ mediator_email, password }, thunkAPI) => {
     try {
-      const response = await fetch(`${BASE_URL}/mediator-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await fetch(`${backendURL}/mediators/mediator-login`, {
+        method: "POST",
+        credentials: "include", // receive httpOnly cookies
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ mediator_email, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        return thunkAPI.rejectWithValue(data.message || "Login failed");
       }
 
-      // Save to localStorage
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
+      // Backend returns { user, accessToken, refreshToken }
+      // Persist only what's needed for re-hydration on refresh
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("access_token", data.accessToken); // ✅ correct key
 
       return data;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.message);
     }
-  }
+  },
 );
 
+// ─── Slice ────────────────────────────────────────────────────────────────────
 const authSlice = createSlice({
-  name: 'auth',
+  name: "auth",
   initialState: {
-    user: JSON.parse(localStorage.getItem('user')) || null,
-    token: localStorage.getItem('token') || null,
+    user: JSON.parse(localStorage.getItem("user")) || null,
+    token: localStorage.getItem("access_token") || null, // ✅ correct key
     loading: false,
     error: null,
   },
@@ -44,8 +44,8 @@ const authSlice = createSlice({
     logout: (state) => {
       state.user = null;
       state.token = null;
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
+      localStorage.removeItem("user");
+      localStorage.removeItem("access_token");
     },
   },
   extraReducers: (builder) => {
@@ -57,11 +57,8 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
-        state.token = action.payload.token;
-        localStorage.setItem('token', action.payload.token);
-        localStorage.setItem('user', JSON.stringify(action.payload.user)); // ✅ important
+        state.token = action.payload.accessToken; // ✅ was 'token', now 'accessToken'
       })
-      
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
